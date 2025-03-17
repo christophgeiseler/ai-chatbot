@@ -3,7 +3,7 @@
 import type { User } from 'next-auth';
 import { useRouter } from 'next/navigation';
 
-import { PlusIcon } from '@/components/icons';
+import { PlusIcon, UploadIcon } from '@/components/icons';
 import { SidebarHistory } from '@/components/sidebar-history';
 import { SidebarUserNav } from '@/components/sidebar-user-nav';
 import { Button } from '@/components/ui/button';
@@ -27,17 +27,33 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       <SidebarHeader>
         <SidebarMenu>
           <div className="flex flex-row justify-between items-center">
-            <Link
-              href="/"
-              onClick={() => {
-                setOpenMobile(false);
-              }}
-              className="flex flex-row gap-3 items-center"
-            >
-              <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
-                Chatbot
-              </span>
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                href="/"
+                onClick={() => {
+                  setOpenMobile(false);
+                }}
+                className="flex flex-row gap-3 items-center"
+              >
+                <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
+                  Chatbot
+                </span>
+              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href="/upload"
+                    onClick={() => {
+                      setOpenMobile(false);
+                    }}
+                    className="p-2 hover:bg-muted rounded-md"
+                  >
+                    <UploadIcon />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent align="end">Upload Files</TooltipContent>
+              </Tooltip>
+            </div>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
