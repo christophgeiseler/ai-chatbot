@@ -1,8 +1,8 @@
+import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
 import { db } from '@/lib/db';
 import { document } from '@/lib/db/schema';
-import { desc, eq } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
+import { eq } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -11,13 +11,12 @@ export async function GET() {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const documents = await db
+    const userDocuments = await db
       .select()
       .from(document)
-      .where(eq(document.userId, session.user.id))
-      .orderBy(desc(document.createdAt));
+      .where(eq(document.userId, session.user.id));
 
-    return NextResponse.json(documents);
+    return NextResponse.json(userDocuments);
   } catch (error) {
     console.error('Error fetching documents:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
