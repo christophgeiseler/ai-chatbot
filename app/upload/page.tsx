@@ -39,7 +39,12 @@ export default function UploadPage() {
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">File Upload</h1>
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-6">
-          <FileUpload onUpload={handleUpload} />
+          <FileUpload 
+            onUpload={handleUpload} 
+            accept={{
+              'text/plain': ['.txt']
+            }}
+          />
           
           {uploadedFile && (
             <div className="mt-4 p-4 bg-gray-50 dark:bg-zinc-900 rounded-lg">

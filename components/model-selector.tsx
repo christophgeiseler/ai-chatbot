@@ -1,91 +1,90 @@
 'use client';
 
-import { startTransition, useMemo, useOptimistic, useState } from 'react';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { useState } from 'react';
 
-import { saveChatModelAsCookie } from '@/app/(chat)/actions';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { chatModels } from '@/lib/ai/models';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 
-import { CheckCircleFillIcon, ChevronDownIcon } from './icons';
+const models = [
+  {
+    value: 'gpt-4-turbo-preview',
+    label: 'GPT-4 Turbo',
+  },
+  {
+    value: 'gpt-3.5-turbo',
+    label: 'GPT-3.5 Turbo',
+  }
+] as const;
 
 export function ModelSelector({
   selectedModelId,
-  className,
 }: {
   selectedModelId: string;
-} & React.ComponentProps<typeof Button>) {
+}) {
   const [open, setOpen] = useState(false);
-  const [optimisticModelId, setOptimisticModelId] =
-    useOptimistic(selectedModelId);
-
-  const selectedChatModel = useMemo(
-    () => chatModels.find((chatModel) => chatModel.id === optimisticModelId),
-    [optimisticModelId],
-  );
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger
-        asChild
-        className={cn(
-          'w-fit data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
-          className,
-        )}
-      >
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <Button
-          data-testid="model-selector"
           variant="outline"
-          className="md:px-2 md:h-[34px]"
+          role="combobox"
+          aria-expanded={open}
+          className="w-[200px] justify-between"
         >
-          {selectedChatModel?.name}
-          <ChevronDownIcon />
+          {selectedModelId
+            ? models.find((model) => model.value === selectedModelId)?.label
+            : 'Select model...'}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-[300px]">
-        {chatModels.map((chatModel) => {
-          const { id } = chatModel;
-
-          return (
-            <DropdownMenuItem
-              data-testid={`model-selector-item-${id}`}
-              key={id}
-              onSelect={() => {
-                setOpen(false);
-
-                startTransition(() => {
-                  setOptimisticModelId(id);
-                  saveChatModelAsCookie(id);
-                });
-              }}
-              data-active={id === optimisticModelId}
-              asChild
-            >
-              <button
-                type="button"
-                className="gap-4 group/item flex flex-row justify-between items-center w-full"
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput placeholder="Search model..." />
+          <CommandEmpty>No model found.</CommandEmpty>
+          <CommandGroup>
+            {models.map((model) => (
+              <CommandItem
+                key={model.value}
+                value={model.value}
+                onSelect={async (currentValue: string) => {
+                  setOpen(false);
+                  await fetch('/api/chat-model', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                      model: currentValue,
+                    }),
+                  });
+                }}
               >
-                <div className="flex flex-col gap-1 items-start">
-                  <div>{chatModel.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {chatModel.description}
-                  </div>
-                </div>
-
-                <div className="text-foreground dark:text-foreground opacity-0 group-data-[active=true]/item:opacity-100">
-                  <CheckCircleFillIcon />
-                </div>
-              </button>
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+                <Check
+                  className={cn(
+                    'mr-2 h-4 w-4',
+                    selectedModelId === model.value
+                      ? 'opacity-100'
+                      : 'opacity-0',
+                  )}
+                />
+                {model.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

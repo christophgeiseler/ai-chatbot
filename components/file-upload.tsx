@@ -1,44 +1,79 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, File, X } from 'lucide-react';
-
 import { Button } from './ui/button';
 
 interface FileUploadProps {
   onUpload: (file: File) => Promise<void>;
-  maxSize?: number; // in bytes
+  maxSize?: number;
   accept?: Record<string, string[]>;
 }
 
-export function FileUpload({ onUpload, maxSize = 5 * 1024 * 1024, accept = {
-  'application/pdf': ['.pdf'],
-  'text/plain': ['.txt'],
-  'application/msword': ['.doc'],
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
-} }: FileUploadProps) {
+export function FileUpload({ 
+  onUpload, 
+  maxSize = 5 * 1024 * 1024, 
+  accept = {
+    'text/plain': ['.txt'],
+    'application/rtf': ['.rtf'],
+    'text/markdown': ['.md'],
+    'application/pdf': ['.pdf'],
+    'application/json': ['.json'],
+    'text/csv': ['.csv'],
+    'application/msword': ['.doc'],
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+  }
+}: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (acceptedFiles.length === 0) return;
+  const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
+    console.log('Drop event occurred');
+    console.log('Accepted files:', acceptedFiles);
+    console.log('Rejected files:', rejectedFiles);
+    
+    if (rejectedFiles.length > 0) {
+      console.log('Rejection errors:', rejectedFiles[0].errors);
+      const errors = rejectedFiles[0].errors.map((err: any) => err.message).join(', ');
+      setError(`File validation failed: ${errors}`);
+      return;
+    }
+
+    if (acceptedFiles.length === 0) {
+      setError('Please upload a valid document file');
+      return;
+    }
     
     setIsUploading(true);
     setError(null);
     
     try {
-      await onUpload(acceptedFiles[0]);
+      const file = acceptedFiles[0];
+      console.log('Processing file:', file.name, file.type, file.size);
+      await onUpload(file);
     } catch (err) {
+      console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Failed to upload file');
     } finally {
       setIsUploading(false);
     }
   }, [onUpload]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop,
     maxSize,
     accept,
     multiple: false,
+    noClick: false,
+    noKeyboard: false,
+    onDropRejected: (rejectedFiles) => {
+      console.log('Files rejected:', rejectedFiles);
+      const errors = rejectedFiles[0].errors.map(err => err.message).join(', ');
+      setError(`File rejected: ${errors}`);
+    },
+    onError: (err) => {
+      console.error('Dropzone error:', err);
+      setError('Error processing file');
+    }
   });
 
   return (
@@ -46,7 +81,8 @@ export function FileUpload({ onUpload, maxSize = 5 * 1024 * 1024, accept = {
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-          ${isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'}
+          ${isDragActive && !isDragReject ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'}
+          ${isDragReject ? 'border-red-500 bg-red-50' : ''}
           ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <input {...getInputProps()} />
@@ -54,11 +90,13 @@ export function FileUpload({ onUpload, maxSize = 5 * 1024 * 1024, accept = {
           <Upload className="w-8 h-8 text-gray-400" />
           <p className="text-sm text-gray-600">
             {isDragActive
-              ? 'Drop the file here'
-              : 'Drag and drop a file here, or click to select'}
+              ? isDragReject
+                ? 'This file type is not supported'
+                : 'Drop the file here'
+              : 'Drag and drop a document file here, or click to select'}
           </p>
           <p className="text-xs text-gray-500">
-            Supported formats: PDF, TXT, DOC, DOCX (max {maxSize / (1024 * 1024)}MB)
+            Supported formats: TXT, RTF, MD, PDF, JSON, CSV, DOC, DOCX (max {maxSize / (1024 * 1024)}MB)
           </p>
         </div>
       </div>

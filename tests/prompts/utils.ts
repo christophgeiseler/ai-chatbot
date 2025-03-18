@@ -1,45 +1,16 @@
-import { CoreMessage, LanguageModelV1StreamPart } from 'ai';
+import { Message } from 'ai';
 import { TEST_PROMPTS } from './basic';
 
 export function compareMessages(
-  firstMessage: CoreMessage,
-  secondMessage: CoreMessage,
+  firstMessage: Message,
+  secondMessage: Message,
 ): boolean {
   if (firstMessage.role !== secondMessage.role) return false;
-
-  if (
-    !Array.isArray(firstMessage.content) ||
-    !Array.isArray(secondMessage.content)
-  ) {
-    return false;
-  }
-
-  if (firstMessage.content.length !== secondMessage.content.length) {
-    return false;
-  }
-
-  for (let i = 0; i < firstMessage.content.length; i++) {
-    const item1 = firstMessage.content[i];
-    const item2 = secondMessage.content[i];
-
-    if (item1.type !== item2.type) return false;
-
-    if (item1.type === 'image' && item2.type === 'image') {
-      // if (item1.image.toString() !== item2.image.toString()) return false;
-      // if (item1.mimeType !== item2.mimeType) return false;
-    } else if (item1.type === 'text' && item2.type === 'text') {
-      if (item1.text !== item2.text) return false;
-    } else if (item1.type === 'tool-result' && item2.type === 'tool-result') {
-      if (item1.toolCallId !== item2.toolCallId) return false;
-    } else {
-      return false;
-    }
-  }
-
+  if (firstMessage.content !== secondMessage.content) return false;
   return true;
 }
 
-const textToDeltas = (text: string): LanguageModelV1StreamPart[] => {
+const textToDeltas = (text: string) => {
   const deltas = text
     .split(' ')
     .map((char) => ({ type: 'text-delta' as const, textDelta: `${char} ` }));
@@ -47,7 +18,7 @@ const textToDeltas = (text: string): LanguageModelV1StreamPart[] => {
   return deltas;
 };
 
-const reasoningToDeltas = (text: string): LanguageModelV1StreamPart[] => {
+const reasoningToDeltas = (text: string) => {
   const deltas = text
     .split(' ')
     .map((char) => ({ type: 'reasoning' as const, textDelta: `${char} ` }));
@@ -56,9 +27,9 @@ const reasoningToDeltas = (text: string): LanguageModelV1StreamPart[] => {
 };
 
 export const getResponseChunksByPrompt = (
-  prompt: CoreMessage[],
+  prompt: Message[],
   isReasoningEnabled: boolean = false,
-): Array<LanguageModelV1StreamPart> => {
+) => {
   const recentMessage = prompt.at(-1);
 
   if (!recentMessage) {
@@ -126,7 +97,6 @@ export const getResponseChunksByPrompt = (
   } else if (compareMessages(recentMessage, TEST_PROMPTS.USER_NEXTJS)) {
     return [
       ...textToDeltas('With Next.js, you can ship fast!'),
-
       {
         type: 'finish',
         finishReason: 'stop',
@@ -134,9 +104,7 @@ export const getResponseChunksByPrompt = (
         usage: { completionTokens: 10, promptTokens: 3 },
       },
     ];
-  } else if (
-    compareMessages(recentMessage, TEST_PROMPTS.USER_IMAGE_ATTACHMENT)
-  ) {
+  } else if (compareMessages(recentMessage, TEST_PROMPTS.USER_IMAGE_ATTACHMENT)) {
     return [
       ...textToDeltas('This painting is by Monet!'),
       {
@@ -148,16 +116,7 @@ export const getResponseChunksByPrompt = (
     ];
   } else if (compareMessages(recentMessage, TEST_PROMPTS.USER_TEXT_ARTIFACT)) {
     return [
-      {
-        type: 'tool-call',
-        toolCallId: 'call_123',
-        toolName: 'createDocument',
-        toolCallType: 'function',
-        args: JSON.stringify({
-          title: 'Essay about Silicon Valley',
-          kind: 'text',
-        }),
-      },
+      ...textToDeltas('Creating a document about Silicon Valley...'),
       {
         type: 'finish',
         finishReason: 'stop',
@@ -165,9 +124,7 @@ export const getResponseChunksByPrompt = (
         usage: { completionTokens: 10, promptTokens: 3 },
       },
     ];
-  } else if (
-    compareMessages(recentMessage, TEST_PROMPTS.CREATE_DOCUMENT_TEXT_CALL)
-  ) {
+  } else if (compareMessages(recentMessage, TEST_PROMPTS.CREATE_DOCUMENT_TEXT_CALL)) {
     return [
       ...textToDeltas(`\n
 # Silicon Valley: The Epicenter of Innovation
@@ -195,9 +152,7 @@ As we move forward, Silicon Valley continues to reinvent itself. While some pred
         usage: { completionTokens: 10, promptTokens: 3 },
       },
     ];
-  } else if (
-    compareMessages(recentMessage, TEST_PROMPTS.CREATE_DOCUMENT_TEXT_RESULT)
-  ) {
+  } else if (compareMessages(recentMessage, TEST_PROMPTS.CREATE_DOCUMENT_TEXT_RESULT)) {
     return [
       {
         type: 'text-delta',
@@ -205,20 +160,14 @@ As we move forward, Silicon Valley continues to reinvent itself. While some pred
       },
       {
         type: 'finish',
-        finishReason: 'tool-calls',
+        finishReason: 'stop',
         logprobs: undefined,
         usage: { completionTokens: 10, promptTokens: 3 },
       },
     ];
   } else if (compareMessages(recentMessage, TEST_PROMPTS.GET_WEATHER_CALL)) {
     return [
-      {
-        type: 'tool-call',
-        toolCallId: 'call_456',
-        toolName: 'getWeather',
-        toolCallType: 'function',
-        args: JSON.stringify({ latitude: 37.7749, longitude: -122.4194 }),
-      },
+      ...textToDeltas('Checking the weather in San Francisco...'),
       {
         type: 'finish',
         finishReason: 'stop',

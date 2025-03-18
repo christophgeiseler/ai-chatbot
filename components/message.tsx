@@ -1,6 +1,7 @@
 'use client';
 
-import type { UIMessage } from 'ai';
+import { type Message } from 'ai';
+import { type UseChatHelpers } from 'ai/react';
 import cx from 'classnames';
 import { AnimatePresence, motion } from 'framer-motion';
 import { memo, useState } from 'react';
@@ -18,7 +19,33 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { MessageEditor } from './message-editor';
 import { DocumentPreview } from './document-preview';
 import { MessageReasoning } from './message-reasoning';
-import { UseChatHelpers } from '@ai-sdk/react';
+
+interface PreviewMessageProps {
+  chatId: string;
+  message: Message & {
+    parts?: Array<{
+      type: string;
+      text?: string;
+      reasoning?: any;
+      toolInvocation?: {
+        toolName: string;
+        toolCallId: string;
+        state: 'call' | 'result';
+        args?: any;
+        result?: any;
+      };
+    }>;
+    experimental_attachments?: Array<{
+      url: string;
+      [key: string]: any;
+    }>;
+  };
+  vote: Vote | undefined;
+  isLoading: boolean;
+  setMessages: UseChatHelpers['setMessages'];
+  reload: UseChatHelpers['reload'];
+  isReadonly: boolean;
+}
 
 const PurePreviewMessage = ({
   chatId,
@@ -28,15 +55,7 @@ const PurePreviewMessage = ({
   setMessages,
   reload,
   isReadonly,
-}: {
-  chatId: string;
-  message: UIMessage;
-  vote: Vote | undefined;
-  isLoading: boolean;
-  setMessages: UseChatHelpers['setMessages'];
-  reload: UseChatHelpers['reload'];
-  isReadonly: boolean;
-}) => {
+}: PreviewMessageProps) => {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
 
   return (

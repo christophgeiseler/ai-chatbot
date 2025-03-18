@@ -1,14 +1,21 @@
 'use client';
 
-import { ChatRequestOptions, Message } from 'ai';
+import { type Message } from 'ai';
+import { type UseChatHelpers } from 'ai/react';
 import { Button } from './ui/button';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { Textarea } from './ui/textarea';
 import { deleteTrailingMessages } from '@/app/(chat)/actions';
-import { UseChatHelpers } from '@ai-sdk/react';
+
+export type CustomMessage = Message & {
+  parts?: Array<{
+    type: string;
+    text?: string;
+  }>;
+};
 
 export type MessageEditorProps = {
-  message: Message;
+  message: CustomMessage;
   setMode: Dispatch<SetStateAction<'view' | 'edit'>>;
   setMessages: UseChatHelpers['setMessages'];
   reload: UseChatHelpers['reload'];
@@ -21,7 +28,6 @@ export function MessageEditor({
   reload,
 }: MessageEditorProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
   const [draftContent, setDraftContent] = useState<string>(message.content);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -75,21 +81,22 @@ export function MessageEditor({
               id: message.id,
             });
 
-            // @ts-expect-error todo: support UIMessage in setMessages
-            setMessages((messages) => {
-              const index = messages.findIndex((m) => m.id === message.id);
+            setMessages((prevMessages: Message[]) => {
+              const index = prevMessages.findIndex((m: Message) => m.id === message.id);
 
               if (index !== -1) {
-                const updatedMessage = {
-                  ...message,
+                const updatedMessage: Message = {
+                  id: message.id,
                   content: draftContent,
-                  parts: [{ type: 'text', text: draftContent }],
+                  role: message.role,
+                  createdAt: message.createdAt
                 };
 
-                return [...messages.slice(0, index), updatedMessage];
+                const newMessages = [...prevMessages.slice(0, index), updatedMessage];
+                return newMessages;
               }
 
-              return messages;
+              return prevMessages;
             });
 
             setMode('view');
