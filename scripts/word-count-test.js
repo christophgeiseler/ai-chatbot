@@ -1,0 +1,23 @@
+import { getWordCount } from '../lib/utils';
+
+const text = `I feel dizzy. I sway a little bit. Trying to keep my feet steady on the ground. Because I'm tired and somewhat overwhelmed. It's been a long day. I've been awake since nearly five in the morning. And in fact, there's so many ideas swirling through my head, I almost feel like a boat unmoored and drifting. I look down, I see the door handle, and to the left there's this black plaque with copper letters etched and in the dim light, I read, "Death and Company." Just as I'm about to open the door and enter I reflect on this long day. I'm at the Poptech Conference in Washington, D.C., an annual event that brings together about 100 of some of the brightest and most creative minds in America. And you might say, from around the world. There are authors, there's freedom fighters, there's neuroscientists, there's nonprofit executives, artists, rappers, some musicians and people who are just very optimistic about our future. We gather at the Kennedy Center at a small side auditorium called "The Reach" a cube-like building made of cement with this beautiful auditorium. We enter into the space. And a man walks on the stage with dreadlocks. His name is Richard. He's from Uganda. He tells us what it means. To find freedom in the Western world. And fight for democracy. Dmitri, a hacker, an expert in cyber security starts to explain that we might be on the brink of World War III because China is hungry. Hungry for what it calls its rightful claim of Taiwan. And Xi, the president might very well try to execute on his desires to expand his footprint of Chinese hegemony. Sometime after 2027, because by the time he reaches 80, he might be too old to cement his legacy in that fashion. Anna Chekhovich, a protégé of Navalny, is now part of the Human Rights Foundation and is promoting freedom for her fellow Russians. And she uses bitcoin as the mechanism to pay her compatriots — the lawyers, the accountants, the people helping her run the organization left behind by Navalny. Lori from the Robert Wood Johnson Foundation talks about having a hunch and acting on the hunch. You have several people speak about branding, such as Brian Collins, a legendary designer. Who says, "what if the future no longer exists?" "And why not choose a future that we want to fight for?" He makes a case and says, "make the future so irresistible that it becomes inevitable." This continuous theme keeps on echoing through the day. "If we can create and manifest anything we want, but we just have to believe in it." Beatrice Fihn, a Nobel Prize winner, says that "the appetite for global cooperation is declining." So there's always this thin layer of doubt. And what I liked most was when Leonard Piccard, an elderly man with white hair who had spent 20 years in prison for hoarding excessive amounts of LSD, he spent his life in a maximum-security prison without trees, without access to a garden in a small eight square foot space, eight-foot-square-foot space, however you say it. And the only entertainment he had was taking bread crumbs every day and feeding it to ants. And when I sat in this audience, right in the center, in the front row. This man spoke to everyone. But I felt like he was talking to me. He talked about the beauty of nature, the sound of hearing the wind in the leaves for the first time after 20 years of being in prison. And this man is now being put on a pedestal by the Psychedelic Alliance to promote drug use because he experimented so much in his youth. But he said, "actually, the solution is not taking a pill because the light is within us." And that echoes inside of me, this idea that hope is personal. It's inside of us. And if we don't get in our way, we can let it out. So I look at this little plaque. This is Death and Company. and I say, "what is that we all stand for?" I walk inside the bar with a group of friends that I just met. And I think to myself, "if I'm happy to be alive. I'd like to teach other people to do the same."`;
+
+// Test the word count function
+const wordCount = getWordCount(text);
+console.log('Word count:', wordCount);
+
+// Test with some edge cases
+const edgeCases = [
+  'This is a hyphenated-word test.',
+  'I\'m using contractions, aren\'t you?',
+  'Numbers like 2023 and abbreviations like U.S.A.',
+  'Multiple   spaces   and\ttabs.',
+  '',  // Empty string
+  null,  // Null
+  undefined,  // Undefined
+];
+
+console.log('\nTesting edge cases:');
+edgeCases.forEach(testCase => {
+  console.log(`"${testCase}": ${getWordCount(testCase)} words`);
+}); 

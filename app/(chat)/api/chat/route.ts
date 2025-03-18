@@ -2,6 +2,8 @@ import { auth } from '@/app/(auth)/auth';
 import { Message } from 'ai';
 import { createChatCompletion } from '@/lib/ai/providers';
 import { Document } from '@/lib/types';
+import { getWordCount } from '@/lib/utils';
+import { StreamingTextResponse } from 'ai';
 
 // IMPORTANT! Set the runtime to edge
 export const runtime = 'edge';
@@ -15,6 +17,37 @@ export async function POST(req: Request) {
   try {
     // Extract the messages and selectedDocuments from the body of the request
     const { messages, selectedDocuments } = await req.json();
+
+    // Check if this is a word count request
+    const lastMessage = messages[messages.length - 1];
+    const isWordCountRequest = lastMessage.content.toLowerCase().includes('word count') || 
+                             lastMessage.content.toLowerCase().includes('count words') ||
+                             lastMessage.content.toLowerCase().includes('count the words');
+
+    if (isWordCountRequest && selectedDocuments?.length > 0) {
+      // Calculate word count for each selected document
+      const wordCounts = selectedDocuments.map((doc: Document) => ({
+        title: doc.title,
+        wordCount: getWordCount(doc.content)
+      }));
+
+      // Create a response message
+      const response = wordCounts.map(({ title, wordCount }: { title: string; wordCount: number }) => 
+        `"${title}": ${wordCount} words`
+      ).join('\n');
+
+      // Create a readable stream from the response
+      const stream = new ReadableStream({
+        async start(controller) {
+          const encoder = new TextEncoder();
+          controller.enqueue(encoder.encode(response));
+          controller.close();
+        }
+      });
+
+      // Return a streaming response
+      return new StreamingTextResponse(stream);
+    }
 
     // Create a context message from selected documents if any
     let contextMessages: Message[] = [];

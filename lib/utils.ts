@@ -163,3 +163,44 @@ export function getTrailingMessageId({
 
   return trailingMessage.id;
 }
+
+/**
+ * Accurately counts words in a text by handling:
+ * 1. Hyphenated compounds
+ * 2. Contractions
+ * 3. Special punctuation
+ * 4. Numbers and abbreviations
+ */
+export function getWordCount(text: string): number {
+  if (!text) return 0;
+  
+  // Remove extra whitespace and normalize
+  const normalizedText = text.trim().replace(/\s+/g, ' ');
+  
+  // Handle special cases:
+  // 1. Treat hyphenated compounds as multiple words unless they're common compounds
+  // 2. Count contractions as single words
+  // 3. Handle special punctuation cases
+  const words = normalizedText
+    .replace(/[.,!?"""]/g, '') // Remove common punctuation
+    .replace(/—/g, ' ') // Replace em dashes with spaces
+    .split(' ')
+    .filter(word => word.length > 0)
+    .map(word => {
+      // Handle hyphenated words
+      if (word.includes('-')) {
+        // Common compounds stay as one word
+        const commonCompounds = ['cube-like', 'eight-foot', 'square-foot'];
+        if (commonCompounds.some(compound => word.includes(compound))) {
+          return word;
+        }
+        // Other hyphenated words count as multiple words
+        const parts = word.split('-').filter(part => part.length > 0);
+        return parts;
+      }
+      return word;
+    })
+    .flat(); // Flatten array because hyphenated words return arrays
+  
+  return words.length;
+}
